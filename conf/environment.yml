@@ -21,5 +21,6 @@ dependencies:
   - ccache
   - python=3.8
   - pip
+  - pytablewriter
   - pip:                            # Packages installed from PyPI
     - -r file:requirements.txt
