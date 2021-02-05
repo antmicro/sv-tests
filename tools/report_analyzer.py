@@ -137,9 +137,8 @@ def check_reports(reportA, reportB):
         tools_removed = toolsB.difference(toolsA)
         summary["added_tools"] = list(tools_added)
         summary["removed_tools"] = list(tools_removed)
-
-    log_list("Added tools:", tools_added)
-    log_list("Removed tools:", tools_removed)
+        log_list("Added tools:", tools_added)
+        log_list("Removed tools:", tools_removed)
 
     logger.debug("Comparable tools:")
     for tool in tools:
