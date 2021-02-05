@@ -123,7 +123,7 @@ def check_reports(reportA, reportB):
     return summary
 
 
-def prepare_comment(summary):
+def prepare_comment(summary, table_path):
     tools = list(summary["comparable_tools"].keys())
     cols = list(summary["comparable_tools"][tools[0]]["summary"].keys())
     cols.insert(0, "tool")
@@ -139,7 +139,7 @@ def prepare_comment(summary):
     writer.header_list = cols
     writer.value_matrix = matrix
     writer.write_table()
-    with open("summary.md", "w") as f:
+    with open(table_path, "w") as f:
         writer.stream = f
         writer.write_table()
 
@@ -157,6 +157,12 @@ def main():
         dest="output_path",
         default="report_summary.json",
         help="path to output json file, defaults to \"report_summary.json\"")
+    parser.add_argument(
+        "-t",
+        "--table",
+        dest="table_path",
+        default="report_summary.md",
+        help="path to output md file with summary, defaults to \"report_summary.md\"")
     args = parser.parse_args()
 
     reportA = get_data(args.report_compare)
@@ -164,7 +170,7 @@ def main():
 
     summary = check_reports(reportA, reportB)
 
-    prepare_comment(summary)
+    prepare_comment(summary, args.table_path)
 
     with open(args.output_path, "w") as json_file:
         json.dump(summary, json_file, indent=4)
