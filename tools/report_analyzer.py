@@ -23,7 +23,7 @@ handlers = [file_handler, stdout_handler]
 
 logging.basicConfig(
     level=logging.DEBUG,
-    format='[%(asctime)s]: %(message)s',
+    format='%(message)s',
     handlers=handlers)
 
 logger = logging.getLogger('report_analyzer_logger')
@@ -55,7 +55,7 @@ def get_data(csv_path):
     return sorted_report
 
 
-def check_tool(tool_reportA, tool_reportB):
+def check_tool(tool_reportA, tool_reportB, tool_name):
     results = {
         "new_passes": [],
         "new_failures": [],
@@ -99,11 +99,16 @@ def check_tool(tool_reportA, tool_reportB):
     results["summary"]["added"] = added_cnt
     results["summary"]["removed"] = removed_cnt
     results["summary"]["not_affected"] = no_change_cnt
-    logger.debug("     - new failures: " + str(fail_cnt))
-    logger.debug("     - new passes: " + str(pass_cnt))
-    logger.debug("     - tests added: " + str(added_cnt))
-    logger.debug("     - tests removed: " + str(removed_cnt))
-    logger.debug("     - tests not affected: " + str(no_change_cnt))
+    if (fail_cnt | pass_cnt | added_cnt | removed_cnt):
+        logger.debug("  - " + tool_name + ":")
+    if (fail_cnt):
+        logger.debug("     - new failures: " + str(fail_cnt))
+    if (pass_cnt):
+        logger.debug("     - new passes: " + str(pass_cnt))
+    if (added_cnt):
+        logger.debug("     - tests added: " + str(added_cnt))
+    if (removed_cnt):
+        logger.debug("     - tests removed: " + str(removed_cnt))
 
     return results
 
@@ -140,10 +145,9 @@ def check_reports(reportA, reportB):
         log_list("Added tools:", tools_added)
         log_list("Removed tools:", tools_removed)
 
-    logger.debug("Comparable tools:")
+    logger.debug("Compared tools:")
     for tool in tools:
-        logger.debug("  - " + tool + ":")
-        tool_results = check_tool(reportA[tool], reportB[tool])
+        tool_results = check_tool(reportA[tool], reportB[tool], tool)
         summary["comparable_tools"][tool] = tool_results
 
     return summary
