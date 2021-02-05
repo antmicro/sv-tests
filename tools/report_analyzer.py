@@ -12,26 +12,10 @@
 import argparse
 import csv
 import json
-import logging
 import sys
 import pytablewriter
 
 relevant_headers = ["Tool", "TestName", "Pass"]
-
-file_handler = logging.FileHandler(filename='analyze.log')
-stdout_handler = logging.StreamHandler(sys.stdout)
-handlers = [file_handler, stdout_handler]
-
-logging.basicConfig(
-    level=logging.DEBUG, format='%(message)s', handlers=handlers)
-
-logger = logging.getLogger('report_analyzer_logger')
-
-
-def log_list(header, entity_list):
-    logger.debug(header)
-    for elem in entity_list:
-        logger.debug("  - " + elem)
 
 
 def get_data(csv_path):
@@ -99,17 +83,6 @@ def check_tool(tool_reportA, tool_reportB, tool_name):
     results["summary"]["removed"] = removed_cnt
     results["summary"]["not_affected"] = no_change_cnt
 
-    if (fail_cnt | pass_cnt | added_cnt | removed_cnt):
-        logger.debug("  - " + tool_name + ":")
-    if (fail_cnt):
-        logger.debug("     - new failures: " + str(fail_cnt))
-    if (pass_cnt):
-        logger.debug("     - new passes: " + str(pass_cnt))
-    if (added_cnt):
-        logger.debug("     - tests added: " + str(added_cnt))
-    if (removed_cnt):
-        logger.debug("     - tests removed: " + str(removed_cnt))
-
     return results
 
 
@@ -142,10 +115,7 @@ def check_reports(reportA, reportB):
         tools_removed = toolsB.difference(toolsA)
         summary["added_tools"] = list(tools_added)
         summary["removed_tools"] = list(tools_removed)
-        log_list("Added tools:", tools_added)
-        log_list("Removed tools:", tools_removed)
 
-    logger.debug("Compared tools:")
     for tool in tools:
         tool_results = check_tool(reportA[tool], reportB[tool], tool)
         summary["comparable_tools"][tool] = tool_results
@@ -187,15 +157,10 @@ def main():
         dest="output_path",
         default="report_summary.json",
         help="path to output json file, defaults to \"report_summary.json\"")
-    parser.add_argument(
-        "-q", "--quiet", action="store_true", help="disable log output")
     args = parser.parse_args()
 
     reportA = get_data(args.report_compare)
     reportB = get_data(args.report_base)
-
-    if (args.quiet):
-        logger.setLevel("INFO")
 
     summary = check_reports(reportA, reportB)
 
