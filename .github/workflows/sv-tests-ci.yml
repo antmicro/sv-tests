@@ -123,7 +123,7 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
-          filename: ../../out/tests_summary.json
+          filename: template.md
       - uses: geekyeggo/delete-artifact@v1
         with:
           name: changes_summary*
