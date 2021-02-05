@@ -110,6 +110,14 @@ jobs:
     steps:
       - name: Checkout code
         uses: actions/checkout@v2
+      - name: Prepare output directories
+        run: mkdir -p out/report
+      - uses: actions/download-artifact@v2
+        with:
+          name: tests_summary
+          path: ./out/
+      - name: Display structure of downloaded files
+        run: ls -R ./out/
       - uses: harupy/comment-on-pr@master
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
