@@ -14,6 +14,7 @@ import csv
 import json
 import logging
 import sys
+import pytablewriter
 
 relevant_headers = ["Tool", "TestName", "Pass"]
 
@@ -22,9 +23,7 @@ stdout_handler = logging.StreamHandler(sys.stdout)
 handlers = [file_handler, stdout_handler]
 
 logging.basicConfig(
-    level=logging.DEBUG,
-    format='%(message)s',
-    handlers=handlers)
+    level=logging.DEBUG, format='%(message)s', handlers=handlers)
 
 logger = logging.getLogger('report_analyzer_logger')
 
@@ -99,6 +98,7 @@ def check_tool(tool_reportA, tool_reportB, tool_name):
     results["summary"]["added"] = added_cnt
     results["summary"]["removed"] = removed_cnt
     results["summary"]["not_affected"] = no_change_cnt
+
     if (fail_cnt | pass_cnt | added_cnt | removed_cnt):
         logger.debug("  - " + tool_name + ":")
     if (fail_cnt):
@@ -153,6 +153,27 @@ def check_reports(reportA, reportB):
     return summary
 
 
+def prepare_comment(summary):
+    tools = list(summary["comparable_tools"].keys())
+    cols = list(summary["comparable_tools"][tools[0]]["summary"].keys())
+    cols.insert(0, "tool")
+
+    matrix = []
+    for tool in tools:
+        vals = list(summary["comparable_tools"][tool]["summary"].values())
+        vals.insert(0, tool)
+        matrix.append(vals)
+
+    writer = pytablewriter.MarkdownTableWriter()
+    writer.table_name = "Compared test results"
+    writer.header_list = cols
+    writer.value_matrix = matrix
+    writer.write_table()
+    with open("summary.md", "w") as f:
+        writer.stream = f
+        writer.write_table()
+
+
 def main():
     parser = argparse.ArgumentParser()
     parser.add_argument(
@@ -177,6 +198,8 @@ def main():
         logger.setLevel("INFO")
 
     summary = check_reports(reportA, reportB)
+
+    prepare_comment(summary)
 
     with open(args.output_path, "w") as json_file:
         json.dump(summary, json_file, indent=4)
