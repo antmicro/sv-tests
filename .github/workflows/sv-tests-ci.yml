@@ -123,4 +123,4 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
-          filename: ./out/tests_summary.json
+          filename: ../../out/tests_summary.json
