@@ -94,10 +94,6 @@ jobs:
       - name: Summary
         run:
           ./.github/workflows/summary.sh
-      - uses: kolpav/purge-artifacts-action@v1
-        with:
-          token: ${{ secrets.GITHUB_TOKEN }}
-          expire-in: 0
       - uses: actions/upload-artifact@v2
         with:
           name: tests_summary
