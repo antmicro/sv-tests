@@ -104,6 +104,7 @@ jobs:
             ./out/report/base_report.csv
 
   Comment:
+    if: github.event_name == 'pull_request'
     name: Comment
     runs-on: ubuntu-18.04
     steps:
