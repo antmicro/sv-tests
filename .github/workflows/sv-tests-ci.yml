@@ -101,3 +101,6 @@ jobs:
             ./out/report/tests_summary.json
             ./out/report/tests_report.csv
             ./out/report/base_report.csv
+      - uses: geekyeggo/delete-artifact@v1
+        with:
+          name: changes_summary*
