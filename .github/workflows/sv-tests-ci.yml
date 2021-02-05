@@ -107,6 +107,7 @@ jobs:
     if: github.event_name == 'pull_request'
     name: Comment
     runs-on: ubuntu-18.04
+    needs: Summary
     steps:
       - name: Checkout code
         uses: actions/checkout@v2
