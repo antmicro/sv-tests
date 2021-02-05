@@ -94,6 +94,10 @@ jobs:
       - name: Summary
         run:
           ./.github/workflows/summary.sh
+      - uses: kolpav/purge-artifacts-action@v1
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          expire-in: 0
       - uses: actions/upload-artifact@v2
         with:
           name: tests_summary
@@ -124,6 +128,3 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
           filename: template.md
-      - uses: geekyeggo/delete-artifact@v1
-        with:
-          name: changes_summary*
