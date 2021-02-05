@@ -99,5 +99,6 @@ jobs:
           name: tests_summary
           path: |
             ./out/report/tests_summary.json
+            ./out/report/tests_summary.md
             ./out/report/tests_report.csv
             ./out/report/base_report.csv
