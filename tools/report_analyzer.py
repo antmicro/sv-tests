@@ -162,7 +162,9 @@ def main():
         "--table",
         dest="table_path",
         default="report_summary.md",
-        help="path to output md file with summary, defaults to \"report_summary.md\"")
+        help=
+        "path to output md file with summary, defaults to \"report_summary.md\""
+    )
     args = parser.parse_args()
 
     reportA = get_data(args.report_compare)
