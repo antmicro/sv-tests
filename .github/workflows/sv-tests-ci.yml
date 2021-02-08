@@ -119,8 +119,17 @@ jobs:
           path: ./out/report
       - name: Display structure of downloaded files
         run: ls -R ./out/
-      - uses: harupy/comment-on-pr@master
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      - id: get-comment-body
+        run: |
+          body=$(cat ../../out/report/tests_summary.md)
+          body="${body//'%'/'%25'}"
+          body="${body//$'\n'/'%0A'}"
+          body="${body//$'\r'/'%0D'}"
+          echo ::set-output name=body::$body
+      - name: Post comment
+        uses: KeisukeYamashita/create-comment@v1
         with:
-          filename: ../../out/report/tests_summary.md
+          check-only-first-line: "true"
+          unique: "true"
+          token: ${{ secrets.GITHUB_TOKEN }}
+          comment: ${{ steps.get-comment-body.outputs.body }}
