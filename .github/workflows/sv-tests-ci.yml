@@ -88,8 +88,6 @@ jobs:
       - uses: actions/download-artifact@v2
         with:
           path: ./out/
-      - name: Display structure of downloaded files
-        run: ls -R ./out/
       - name: Summary
         run:
           ./.github/workflows/summary.sh
