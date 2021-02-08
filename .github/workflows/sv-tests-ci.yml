@@ -112,8 +112,8 @@ jobs:
           echo $artifacts
       - name: Delete Old Artifacts
         uses: geekyeggo/delete-artifact@v1
-          with:
-            name: ${{ steps.get-artifacts-to-delete.outputs.artifacts }}
+        with:
+          name: ${{ steps.get-artifacts-to-delete.outputs.artifacts }}
 
   Comment:
     if: github.event_name == 'pull_request'
