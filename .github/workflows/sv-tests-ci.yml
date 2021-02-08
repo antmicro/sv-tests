@@ -119,7 +119,7 @@ jobs:
           path: ./out/report
       - name: Display structure of downloaded files
         run: ls -R ./out/
-      - id: get-comment-body
+      - id: get-comment-bodyy
         run: |
           body=$(cat ../../out/report/tests_summary.md)
           body="${body//'%'/'%25'}"
