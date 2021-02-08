@@ -101,7 +101,7 @@ jobs:
             ./out/report/base_report.csv
       - id: get-artifacts-to-delete
         run: |
-          artifacts=$(find ./out -type d -name 'report_*')
+          artifacts=$(find ./out -type d -name 'report_*' -exec basename {} \;)
           echo $artifacts
           artifacts="${artifacts//'%'/'%25'}"
           artifacts="${artifacts//$'\n'/'%0A'}"
