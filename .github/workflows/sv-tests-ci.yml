@@ -126,7 +126,7 @@ jobs:
           body="${body//$'\n'/'%0A'}"
           body="${body//$'\r'/'%0D'}"
           echo ::set-output name=body::$body
-      - name: Post commentt
+      - name: Post comment
         uses: KeisukeYamashita/create-comment@v1
         with:
           check-only-first-line: "true"
