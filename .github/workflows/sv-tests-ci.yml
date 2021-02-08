@@ -64,14 +64,13 @@ jobs:
       - name: Run
         run:
           ./.github/workflows/run.sh
-      - name: Analyze
+      - name: Prepare Report
         run:
-          ./.github/workflows/analyze.sh
+          ./.github/workflows/tool_report_prepare.sh
       - uses: actions/upload-artifact@v2
         with:
-          name: changes_summary_${{ matrix.env.JOB_NAME }}
+          name: report_${{ matrix.env.JOB_NAME }}
           path: |
-            ./out/report/${{ matrix.env.JOB_NAME }}_changes_summary.json
             ./out/report/${{ matrix.env.JOB_NAME }}_report.csv
 
   Summary:

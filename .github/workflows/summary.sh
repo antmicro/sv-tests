@@ -26,15 +26,15 @@ conda info -a
 wget https://symbiflow.github.io/sv-tests-results/report.csv -O $BASE_REPORT
 
 # Delete headers from all report.csv
-for file in $(find ./out/changes_summary_* -name "*.csv" -print); do
+for file in $(find ./out/report_* -name "*.csv" -print); do
 	sed -i.backup 1,1d $file
 done
 
 # concatenate test reports
-cat $(find ./out/changes_summary_* -name "*.csv" -print) >> $COMPARE_REPORT
+cat $(find ./out/report_* -name "*.csv" -print) >> $COMPARE_REPORT
 
 # Insert header at the first line of concatenated report
-sed -i 1i\ $(cat $(find ./out/changes_summary_* -name "*.csv.backup" -print | head -1) | head -1) $COMPARE_REPORT
+sed -i 1i\ $(cat $(find ./out/report_* -name "*.csv.backup" -print | head -1) | head -1) $COMPARE_REPORT
 
 python $ANALYZER $COMPARE_REPORT $BASE_REPORT -o $CHANGES_SUMMARY_JSON -t $CHANGES_SUMMARY_MD
 
