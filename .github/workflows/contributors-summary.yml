@@ -1,0 +1,16 @@
+name: comment-pr
+
+on:
+  push:
+  pull_request:
+
+jobs:
+  Comment:
+    name: Calculate contribution stats
+    runs-on: ubuntu-18.04
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v2
+      - name: Run calculation
+        run: |
+          ./github/workflows/contributors-summary.sh
