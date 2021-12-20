@@ -11,6 +11,7 @@
 :name: cont_assignment
 :description: continuous assignment test
 :tags: 10.3.2
+:results_group: ten-three
 */
 module top(input a, input b);
 

@@ -13,5 +13,6 @@
 :should_fail_because: The integers in `timescale arguments specify an order of magnitude for the size of the value; the valid integers are 1, 10, and 100
 :tags: 22.7
 :type: simulation elaboration
+:results_group: twotwoX
 */
 `timescale 9 ns / 1 ps

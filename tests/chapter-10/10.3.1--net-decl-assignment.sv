@@ -11,6 +11,7 @@
 :name: net_decl_assignment
 :description: net declaration assignment test
 :tags: 10.3.1
+:results_group: ten-three
 */
 module top(input a, input b);
 

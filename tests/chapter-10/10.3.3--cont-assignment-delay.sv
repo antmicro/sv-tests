@@ -11,6 +11,7 @@
 :name: cont_assignment_delay
 :description: continuous assignment with delay test
 :tags: 10.3.3
+:results_group: ten-three
 */
 module top(input a, input b);
 

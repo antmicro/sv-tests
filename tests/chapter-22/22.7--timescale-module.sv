@@ -12,6 +12,7 @@
 :description: Test
 :tags: 22.7
 :type: preprocessing
+:results_group: twotwoX
 */
 `timescale 10 ns / 1 ns
 module test;

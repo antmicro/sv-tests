@@ -12,6 +12,7 @@
 :description: Test
 :tags: 22.6
 :type: preprocessing
+:results_group: twotwoX
 */
 module test(out);
 output out;

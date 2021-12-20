@@ -12,6 +12,7 @@
 :description: simple net declaration assignment test
 :tags: 10.3.1
 :type: simulation elaboration parsing
+:results_group: ten-three
 */
 module top(input a, output b);
 

@@ -12,5 +12,6 @@
 :description: Test
 :tags: 22.7
 :type: preprocessing
+:results_group: twotwoX
 */
 `timescale 10 us / 100 ns

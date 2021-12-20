@@ -13,6 +13,7 @@
 :should_fail_because: Illegal to procedurally assign to wire, IEEE Table 10-1
 :tags: 10.3
 :type: simulation elaboration
+:results_group: ten-three
 */
 module top(input a, input b);
 

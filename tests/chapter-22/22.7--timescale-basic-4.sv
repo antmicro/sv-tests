@@ -13,5 +13,6 @@
 :should_fail_because: The time_precision argument shall be at least as precise as the time_unit argument; it cannot specify a longerunit of time than time_unit.
 :tags: 22.7
 :type: simulation elaboration
+:results_group: twotwoX
 */
 `timescale 1 ns / 10 ns

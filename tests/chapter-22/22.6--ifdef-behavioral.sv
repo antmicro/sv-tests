@@ -12,6 +12,7 @@
 :description: Test
 :tags: 22.6
 :type: preprocessing
+:results_group: twotwoX
 */
 module and_op (a, b, c);
 	output a;
