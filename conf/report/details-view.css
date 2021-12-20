@@ -1,0 +1,60 @@
+:root {
+  font-family: sans-serif;
+  font-size: 0.8rem;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  padding: 0;
+  width: 100%;
+  min-width: min-content;
+}
+
+header {
+  width: 100%;
+  background-color: #666; color: #fff;
+  font-family: sans-serif;
+  padding: 0;
+  line-height: 1rem;
+  margin: 0;
+  display: grid;
+  grid-template-columns: max-content 1fr;
+  gap: 0;
+  justify-content: stretch;
+  justify-items: stretch;
+}
+
+h1 {
+  font-size: 0.9em;
+  margin: 0; padding: 4px;
+  text-decoration: inherit;
+  font-weight: bold;
+  text-transform: uppercase;
+}
+
+h2 {
+  font-size: inherit;
+  margin: 0; padding: 4px;
+  color: inherit;
+  font-weight: normal;
+}
+
+header a {
+  display: inline-block;
+  color: inherit;
+  text-decoration: underline;
+  text-underline-position: under;
+  text-decoration-color: #fff4;
+}
+
+header a:hover {
+  background-color: #0004;
+}
+
+pre, code {
+  font-family: "Courier New", Consolas, monospace;
+}
