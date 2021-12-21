@@ -55,7 +55,7 @@
           </tr>
         </thead>
         <tbody>
-          {% for tag, tag_info in report.tags|dictsort %}
+          {% for tag, tag_info in report.tags|numeric_dictsort %}
           {%   set types_used_in_the_row = [] %}
           {%   for tool, tool_results in report.tools|dictsort %}
           {%     if tag in tool_results.tags %}

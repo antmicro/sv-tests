@@ -129,12 +129,29 @@ def surroundWithQuotes(value: str, quot='"'):
     return quot + str(value) + quot
 
 
+# NOTE: this works correctly only with numbers shorter than 10 digits
+def numericSortKey(s: str):
+    # prepend all number occurences with the length of the number
+    r = re.sub(r"\d+", lambda m: str(len(m.group(0))) + m.group(0), s).lower()
+    return r
+
+
+def numericSort(l: List[str]):
+    return sorted(l, key=numericSortKey)
+
+
+def numericDictSort(d: Dict[str, Any]):
+    return sorted(d.items(), key=lambda kv: numericSortKey(kv[0]))
+
+
 # Initialize Jinja2 environment with custom filter
 
 jinja2env = jinja2.Environment(trim_blocks=True, lstrip_blocks=True)
 jinja2env.filters["escape_attr"] = escapeXmlAttribute
 jinja2env.filters["escape_js_str"] = escapeJsString
 jinja2env.filters["quote"] = surroundWithQuotes
+jinja2env.filters["numeric_sort"] = numericSort
+jinja2env.filters["numeric_dictsort"] = numericDictSort
 
 
 def exists_and_is_newer_than(target: str, sources: List[str]):
@@ -169,16 +186,9 @@ class TestResultComp(object):
     def __init__(self, item):
         self.item = item
 
-    def prepend_nums(self, s):
-        # prepend all number occurences with the length of the number
-        for m in re.findall(r'\d+', s):
-            s = s.replace(m, str(len(m)) + m)
-
-        return s
-
     def __lt__(self, other):
-        s = self.prepend_nums(self.item.name)
-        o = self.prepend_nums(other.item.name)
+        s = numericSortKey(self.item.name)
+        o = numericSortKey(other.item.name)
 
         return s < o
 

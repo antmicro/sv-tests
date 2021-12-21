@@ -1,62 +1,26 @@
 /// Custom sorting for DataTable ///////////////////////////////////////
-
 (function () {
 
-  function isChapterNumber(a) {
-    var parts = a.split(".")
-
-    for (var i = 0; i < parts.length; i++) {
-
-      if (isNaN(Number(parts[i]))) {
-        return false
-      }
-    }
-
-    return true
-  };
-
-  function chapterNumberCompare(a, b) {
-    if (!isChapterNumber(a)) {
-      if (!isChapterNumber(b)) {
-        return ((a < b) ? -1 : ((a > b) ? 1 : 0))
-      } else {
-        return -1
-      }
-    } else if (!isChapterNumber(b)) {
-      return 1
-    }
-
-    var a_parts = a.split(".")
-    var b_parts = b.split(".")
-
-    /* One or none of these loops will be executed */
-    while (a_parts.length < b_parts.length) {
-      a_parts.push("0")
-    }
-
-    while (a_parts.length > b_parts.length) {
-      b_parts.push("0")
-    }
-
-    for (var i = 0; i < a_parts.length; i++) {
-      if (Number(a_parts[i]) == Number(b_parts[i])) {
-        continue
-      } else if (Number(a_parts[i]) < Number(b_parts[i])) {
-        return -1
-      } else if (Number(a_parts[i]) > Number(b_parts[i])) {
-        return 1
-      }
-    }
-
-    return 0
+  // NOTE: this works correctly only with numbers shorter than 10 digits
+  const numeric_sort_key_cache = new Map();
+  function numeric_sort_key(s) {
+    if (numeric_sort_key_cache.has(s))
+      return numeric_sort_key_cache.get(s)
+    const k = s.replace(/[0-9]+/g, (m)=>`${m.length}${m}`).toLowerCase()
+    numeric_sort_key_cache.set(s, k)
+    return k
   }
 
   $.fn.dataTable.ext.type.order['sv-id-asc'] = function (a, b) {
-    return chapterNumberCompare(a, b)
+    const key_a = numeric_sort_key(a)
+    const key_b = numeric_sort_key(b)
+    return key_a < key_b ? -1 : (key_a > key_b ? 1 : 0);
   }
 
   $.fn.dataTable.ext.type.order['sv-id-desc'] = function (a, b) {
-    return chapterNumberCompare(b, a)
+    const key_a = numeric_sort_key(a)
+    const key_b = numeric_sort_key(b)
+    return key_b < key_a ? -1 : (key_b > key_a ? 1 : 0);
   }
 
   $.fn.dataTable.ext.order['test-status'] = function (settings, col) {
