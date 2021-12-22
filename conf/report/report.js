@@ -121,15 +121,22 @@ class ConfigLoader {
 
 class ReportViewerState {
   constructor() {
-    this._state = {
+    this._initial_state = {
       current_tool_tag: [null, null],
       current_test: null,
+      current_group: null,
     }
+    Object.freeze(this._initial_state)
+    this.set_initial_state()
 
     this._subscribers = {}
-    for (const state_key of Object.keys((this._state))) {
+    for (const state_key of Object.keys((this._initial_state))) {
       this._subscribers[state_key] = new Set()
     }
+  }
+
+  set_initial_state() {
+    this._state = { ...this._initial_state }
   }
 
   set(new_values, sender=undefined) {
@@ -188,7 +195,8 @@ class TestDetailsPanel {
     this._selected_item = null
     this._last_viewed_test = null,
 
-    this._state.subscribe(["current_tool_tag", "current_test"], this._state_changed.bind(this))
+    this._state.subscribe(["current_tool_tag", "current_test", "current_group"],
+        this._state_changed.bind(this))
 
     this._close_button.onclick = () => this.close()
   }
@@ -227,7 +235,7 @@ class TestDetailsPanel {
     this._test_name_to_id.clear()
 
     let test_id = 0
-    for (const [name, status, log_url, first_input_url] of this._config.data) {
+    for (const [group, name, status, log_url, first_input_url] of this._config.data) {
       this._test_name_to_id.set(name, test_id)
 
       const item = this._item_template.content.firstElementChild.cloneNode(true)
@@ -255,7 +263,7 @@ class TestDetailsPanel {
       } else {
         try {
           // Use first available test name
-          test = this._config.data[0][0]
+          test = this._config.data[0][1]
           console.debug(`Using first available test: "${test}"`)
         } catch (e) {
           console.error("Loaded tests list is empty.\n"
@@ -266,8 +274,8 @@ class TestDetailsPanel {
       this._state.set({ current_test: test }, this)
     }
     const test_id = this._test_name_to_id.get(test)
-    const log_url = this._config.data[test_id][2]
-    const first_input_url = this._config.data[test_id][3]
+    const log_url = this._config.data[test_id][3]
+    const first_input_url = this._config.data[test_id][4]
     const item = this._items[test_id]
 
     this._open_log(log_url)
@@ -307,9 +315,9 @@ class TestDetailsPanel {
     const test_id = event.target._test_id
     console.assert(test_id >= 0 || test_id < this._config.data.length, test_id)
 
-    const name = this._config.data[test_id][0]
-    const log_url = this._config.data[test_id][2]
-    const first_input_url = this._config.data[test_id][3]
+    const name = this._config.data[test_id][1]
+    const log_url = this._config.data[test_id][3]
+    const first_input_url = this._config.data[test_id][4]
 
     this._open_log(log_url)
     this._open_file(first_input_url)
@@ -456,16 +464,19 @@ class UrlParametersController {
     const url = new URL(window.location)
     url.hash = ""
 
+    const [tool, tag] = this._state.get("current_tool_tag")
+    const test = this._state.get("current_test")
+    const group = this._state.get("current_group")
+
     if ("current_test" in values || "current_tool_tag" in values) {
-      const [tool, tag] = this._state.get("current_tool_tag")
-      const test = this._state.get("current_test")
       if (tool === null || tag === null) {
         url.searchParams.delete("v")
         document.title = `SystemVerilog Report`
-      } else if (test !== null) { // Do not show "temporary" URLs without a test
-        url.searchParams.set("v", `${tool} ${tag} ${test}`)
+      } else if (test !== null && group !== null) {
+        url.searchParams.set("v", `${tool} ${tag} ${group} ${test}`)
         document.title = `${tool}/${tag}/${test} - SystemVerilog Report`
       } else {
+        // Do not set URLs without a test or group
         return
       }
       if (url.href == window.location.href)
@@ -474,6 +485,14 @@ class UrlParametersController {
         history.replaceState(null, "", url.href)
       else
         history.pushState(null, "", url.href)
+    } else if ("current_group" in values) {
+      // only group has changed
+      if (group === null || test === null) {
+        // Do not set URLs without a test or group
+        return
+      }
+      url.searchParams.set("v", `${tool} ${tag} ${group} ${test}`)
+      history.replaceState(null, "", url.href)
     }
   }
 
@@ -486,11 +505,15 @@ class UrlParametersController {
   _update_state_from_parameters() {
     let url = new URL(window.location)
 
-    const set_state_if_valid = (tool, tag, test) => {
+    const set_state_if_valid = (tool, tag, group, test) => {
       if (tool !== undefined && tool !== ""
           && tag !== undefined && tag !== ""
           && test !== undefined && tag !== "") {
-        this._state.set({ "current_tool_tag": [tool, tag], "current_test": test })
+        this._state.set({
+          "current_tool_tag": [tool, tag],
+          "current_test": test,
+          "current_group": is_string(group) ? group : null,
+        })
         return true
       }
       return false
@@ -499,8 +522,14 @@ class UrlParametersController {
     // Try URL parameter "v" containing "${TOOL} ${TAG} ${TEST}"
     const v = url.searchParams.get("v")
     if (is_string(v) && !is_empty(v)) {
-      const [tool, tag, test] = v.split(" ")
-      if (set_state_if_valid(tool, tag, test))
+      const values = v.split(" ")
+      let tool, tag, test
+      let group = null
+      if (values.length == 4)
+        [tool, tag, group, test] = values
+      else
+        [tool, tag, test] = values
+      if (set_state_if_valid(tool, tag, group, test))
         return
     }
 
@@ -508,13 +537,13 @@ class UrlParametersController {
     if (is_string(url.hash) && !is_empty(url.hash)) {
       const hash = decodeURIComponent(url.hash).substr(1)
       const [tool, tag, test] = hash.split("|")
-      if (set_state_if_valid(tool, tag, test))
+      if (set_state_if_valid(tool, tag, null, test))
         return
     }
 
     // Set initial state (no selected test). Required for correct state
     // restoration from history.
-    this._state.set({ "current_tool_tag": [null, null], "current_test": null })
+    this.set_initial_state()
   }
 }
 

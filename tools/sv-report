@@ -29,6 +29,7 @@ import dataclasses
 import enum
 from typing import Dict, Any, List, Set, Iterable
 import json
+import itertools
 
 parser = argparse.ArgumentParser()
 
@@ -447,7 +448,7 @@ def renderTagResultsConfig(
     js_global_variable_name = f"config_loader_data['{tool}/{tag}']"
 
     # Order of values in each entry:
-    # [name, status, log_html_path, first_input_file_html_path]
+    # [group, name, status, log_html_path, first_input_file_html_path]
     config = []
     for test_result in test_results:
         name = test_result.name
@@ -455,7 +456,8 @@ def renderTagResultsConfig(
         log_html_file = test_result.log_html_file
         first_input_html = test_result.input_files[0] + ".html"
         first_input_html = urllib.parse.quote(first_input_html)
-        config.append([name, status, log_html_file, first_input_html])
+        group = test_result.results_group
+        config.append([group, name, status, log_html_file, first_input_html])
 
     js_data = json.dumps(config, separators=(",", ":"))
     code = f"{js_global_variable_name} = {js_data}"
@@ -641,8 +643,11 @@ def collect_logs(runner_name: str):
         f"{runner_name}: (Re)generated {rendered_count}/{tests_count} rendered log files."
     )
 
+    all_used_tags: Set[str] = set()
+
     for group_id, local_group in local_groups.items():
         group = local_group.group
+        all_used_tags.update(group.tags.keys())
         for tag_id, tag_tool_result in group.tags.items():
             if tag_tool_result.status != TestStatus.NA:
                 group.summary.total_tested_tags += 1
@@ -650,13 +655,6 @@ def collect_logs(runner_name: str):
                     group.summary.total_passed_tags += 1
 
             tag_tool_result.tests.sort(key=lambda t: numericSortKey(t.name))
-            config_js = os.path.join(
-                out_dir, "results", runner_name.lower(),
-                f"{tag_id.lower()}.config.js")
-
-            # FIXME: render tests from ALL group_id
-            # Render the config
-            renderTagResultsConfig(config_js, runner_name, tag_id, tag_tool_result.tests)
 
         time = local_group.passed_tests_time
         size = local_group.passed_tests_input_files_size
@@ -664,6 +662,15 @@ def collect_logs(runner_name: str):
             group.summary.passed_throughput = 0
         else:
             group.summary.passed_throughput = size / time / 1024
+
+    for tag_id in all_used_tags:
+        # List of tag's test lists from all groups
+        tests_lists = [lg.group.tags[tag_id].tests for lg in local_groups.values() if tag_id in lg.group.tags]
+        config_js = os.path.join(out_dir, "results", runner_name.lower(), tag_id.lower() + ".config.js")
+
+        # Render the config
+        renderTagResultsConfig(config_js, runner_name, tag_id, itertools.chain.from_iterable(tests_lists))
+
 
     try:
         with open(os.path.join(args.logs, runner_name, "version")) as f:
