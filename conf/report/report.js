@@ -129,6 +129,15 @@ class ReportViewerState {
     Object.freeze(this._initial_state)
     this.set_initial_state()
 
+    this._state_proxy = new Proxy(this._state, {
+      get: function (target, prop, receiver) {
+        return target[prop]
+      },
+      set: function(target, property, value, receiver) {
+        throw new Error(`Attempted direct modification of the state. property: ${property}, value: ${value}`)
+      }
+    })
+
     this._subscribers = {}
     for (const state_key of Object.keys((this._initial_state))) {
       this._subscribers[state_key] = new Set()
@@ -146,12 +155,18 @@ class ReportViewerState {
     console.debug("Set state:", new_values)
     for (const [key, value] of Object.entries(new_values)) {
       console.assert(key in this._state, key)
-      console.debug(`state change: ${key}: "${this._state[key]}" → "${value}"`)
+
+      let old_value = this._state[key]
+      old_value = is_string(old_value) ? `"${old_value}"` : old_value
+      let new_value = value
+      new_value = is_string(new_value) ? `"${new_value}"` : new_value
+      console.debug(`state change: ${key}: ${old_value} → ${new_value}`)
+
       this._state[key] = value
       modified_values[key] = value
       this._subscribers[key].forEach(v => interested_subscribers.add(v))
     }
-    interested_subscribers.forEach(cb => cb(modified_values, sender))
+    interested_subscribers.forEach(cb => cb(this._state_proxy, modified_values, sender))
     console.groupEnd()
   }
 
@@ -193,35 +208,60 @@ class TestDetailsPanel {
     this._test_name_to_id = new Map()
     this._items = []
     this._selected_item = null
-    this._last_viewed_test = null,
+    this._last_viewed_test = null
 
-    this._state.subscribe(["current_tool_tag", "current_test", "current_group"],
+    this._state.subscribe(
+        ["current_tool_tag", "current_test", "current_group"],
         this._state_changed.bind(this))
 
     this._close_button.onclick = () => this.close()
   }
 
-  async _state_changed(values, sender) {
+  async _state_changed(state, changed, sender) {
     if (sender === this)
       return
 
-    if ("current_tool_tag" in values) {
-      const [tool, tag] = values.current_tool_tag
+    if ("current_tool_tag" in changed || "current_group" in changed) {
+      const [tool, tag] = state.current_tool_tag
 
       if (tool !== null && tag !== null) {
-        await this._load_tests(tool, tag)
-        this._show_test(this._state.get("current_test"))
+        let group = state.current_group
+        if (group === null) {
+          console.assert(state.current_test !== null, state.current_test)
+          group = await this._find_group(tool, tag, state.current_test)
+          this._state.set({ "current_group": group }, this)
+        }
+        await this._load_tests(tool, tag, group)
+        this._show_test(state.current_test)
       } else {
         this._unload_and_hide()
       }
-    } else if ("current_test" in values) {
-      this._show_test(values.current_test)
+    } else if ("current_test" in changed) {
+      this._show_test(state.current_test)
     }
   }
 
-  async _load_tests(tool, tag) {
+  async _find_group(tool, tag, test) {
     console.assert(is_string(tool) && !is_empty(tool), tool)
     console.assert(is_string(tag) && !is_empty(tag), tag)
+    console.assert(is_string(test) && !is_empty(test), test)
+
+    tool = tool.toLowerCase()
+    tag = tag.toLowerCase()
+
+    await this._config.load(tool, tag)
+
+    for (const [group, name] of this._config.data) {
+      if (name === test)
+        return group
+    }
+    return null
+  }
+
+  async _load_tests(tool, tag, group) {
+    console.assert(is_string(tool) && !is_empty(tool), tool)
+    console.assert(is_string(tag) && !is_empty(tag), tag)
+    console.assert(is_string(group), group)
 
     tool = tool.toLowerCase()
     tag = tag.toLowerCase()
@@ -234,8 +274,12 @@ class TestDetailsPanel {
     this._items = []
     this._test_name_to_id.clear()
 
-    let test_id = 0
-    for (const [group, name, status, log_url, first_input_url] of this._config.data) {
+    let test_id = -1
+    for (const [test_group, name, status, log_url, first_input_url] of this._config.data) {
+      ++test_id
+      if (test_group !== group)
+        continue
+
       this._test_name_to_id.set(name, test_id)
 
       const item = this._item_template.content.firstElementChild.cloneNode(true)
@@ -247,8 +291,6 @@ class TestDetailsPanel {
 
       this._tests_list.appendChild(item)
       this._items.push(item)
-
-      ++test_id
     }
   }
 
@@ -256,27 +298,31 @@ class TestDetailsPanel {
     console.assert(this._current_tool !== null)
     console.assert(test === null || is_string(test), test)
 
+    let test_id
     if (!this._test_name_to_id.has(test)) {
       if (this._test_name_to_id.has(this._last_viewed_test)) {
         test = this._last_viewed_test
+        test_id = this._test_name_to_id.get(test)
         console.debug(`Using last viewed test: "${test}"`)
       } else {
         try {
-          // Use first available test name
-          test = this._config.data[0][1]
+          // Use first available test
+          test_id = this._items[0]._test_id
+          test = this._config.data[test_id][1]
           console.debug(`Using first available test: "${test}"`)
         } catch (e) {
           console.error("Loaded tests list is empty.\n"
-              + "tool: %s\ntag: %s", this._current_tool, this._current_test)
+            + "tool: %s\ntag: %s", this._current_tool, this._current_test)
           return
         }
       }
-      this._state.set({ current_test: test }, this)
+      this._state.set({ "current_test": test }, this)
+    } else {
+      test_id = this._test_name_to_id.get(test)
     }
-    const test_id = this._test_name_to_id.get(test)
     const log_url = this._config.data[test_id][3]
     const first_input_url = this._config.data[test_id][4]
-    const item = this._items[test_id]
+    const item = this._items.find((e) => e._test_id == test_id)
 
     this._open_log(log_url)
     this._open_file(first_input_url)
@@ -295,7 +341,6 @@ class TestDetailsPanel {
     console.assert(is_string(url) && !is_empty(url), url)
     this._file.contentWindow.location.replace(url);
   }
-
 
   _set_selected_item(item) {
     if (this._selected_item === item)
@@ -323,7 +368,7 @@ class TestDetailsPanel {
     this._open_file(first_input_url)
     this._set_selected_item(event.target)
     this._last_viewed_test = name
-    this._state.set({current_test: name})
+    this._state.set({ "current_test": name })
   }
 
   _unload_and_hide() {
@@ -343,7 +388,11 @@ class TestDetailsPanel {
 
   close() {
     this._unload_and_hide()
-    this._state.set({ current_tool_tag: [null, null], current_test: null }, this)
+    this._state.set({
+      "current_tool_tag": [null, null],
+      "current_test": null,
+      "current_group": null,
+    }, this)
   }
 }
 
@@ -356,7 +405,9 @@ class TestResultCellsSelectionController {
 
     this._selected_cell = null;
 
-    this._state.subscribe(["current_tool_tag"], this._state_changed.bind(this))
+    this._state.subscribe(
+        ["current_tool_tag", "current_group"],
+        this._state_changed.bind(this))
 
     for (const table of this._tables) {
       const cells = table.querySelectorAll("tbody > tr > td:not(:empty)")
@@ -366,18 +417,19 @@ class TestResultCellsSelectionController {
     }
   }
 
-  _state_changed(values, sender) {
+  _state_changed(state, changed, sender) {
     if (sender === this)
       return
 
-    if ("current_tool_tag" in values) {
-      const [tool, tag] = values.current_tool_tag
-      this._set_selected_cell(tool, tag)
+    if ("current_tool_tag" in changed || "current_group" in changed) {
+      const [tool, tag] = state.current_tool_tag
+      const group = state.current_group
+      this._set_selected_cell(tool, tag, group)
     }
   }
 
-  _set_selected_cell(tool, tag) {
-    if (tool === null || tag === null) {
+  _set_selected_cell(tool, tag, group) {
+    if (tool === null || tag === null || group === null) {
       this._set_selected_cell_element(null)
       return
     }
@@ -387,6 +439,8 @@ class TestResultCellsSelectionController {
 
     let cell = null
     for (const table of this._tables) {
+      if (table.dataset.group != group)
+        continue
       cell = table.querySelector(`tbody > tr[data-tag="${tag}"] > td[data-tool="${tool}"]`);
       if (cell)
         break;
@@ -411,17 +465,31 @@ class TestResultCellsSelectionController {
   }
 
   _cell_clicked(event) {
+    const row_element = event.target.parentElement
+    const tbody_element = row_element.parentElement
+    const table_element = tbody_element.parentElement
+
     const tool = event.target.dataset.tool
-    const tag = event.target.parentElement.dataset.tag
+    const tag = row_element.dataset.tag
+    const group = table_element.dataset.group
 
     const [current_tool, current_tag] = this._state.get("current_tool_tag")
+    const current_group = this._state.get("current_group")
 
-    if (tool === current_tool && tag === current_tag) {
+    if (tool === current_tool && tag === current_tag && group == current_group) {
       this._set_selected_cell_element(null)
-      this._state.set({ current_tool_tag: [null, null], current_test: null }, this)
+      this._state.set({
+        "current_tool_tag": [null, null],
+        "current_test": null,
+        "current_group": null,
+      }, this)
     } else {
       this._set_selected_cell_element(event.target)
-      this._state.set({ current_tool_tag: [tool, tag], current_test: null }, this)
+      this._state.set({
+        "current_tool_tag": [tool, tag],
+        "current_test": null,
+        "current_group": group,
+      }, this)
     }
   }
 }
@@ -440,7 +508,10 @@ class KeyboardControl {
       case "Escape":
       case "Esc":
         const current_test = this._state.get("current_test")
-        this._state.set({ current_tool_tag: [null, null], current_test: null })
+        this._state.set({
+          "current_tool_tag": [null, null],
+          "current_test": null,
+        })
         break
     }
   }
@@ -451,24 +522,26 @@ class KeyboardControl {
 class UrlParametersController {
   constructor(state_manager) {
     this._state = state_manager
-    this._state.subscribe(["current_tool_tag", "current_test"], this._state_changed.bind(this))
+    this._state.subscribe(
+        ["current_tool_tag", "current_test", "current_group"],
+        this._state_changed.bind(this))
     this._state_handling_suspended = false
     this._update_state_from_parameters()
     window.addEventListener("popstate", this._restore_state.bind(this))
   }
 
-  _state_changed(values, sender) {
+  _state_changed(state, changed, sender) {
     if (this._state_handling_suspended)
       return
 
     const url = new URL(window.location)
     url.hash = ""
 
-    const [tool, tag] = this._state.get("current_tool_tag")
-    const test = this._state.get("current_test")
-    const group = this._state.get("current_group")
+    const [tool, tag] = state.current_tool_tag
+    const test = state.current_test
+    const group = state.current_group
 
-    if ("current_test" in values || "current_tool_tag" in values) {
+    if ("current_test" in changed || "current_tool_tag" in changed) {
       if (tool === null || tag === null) {
         url.searchParams.delete("v")
         document.title = `SystemVerilog Report`
@@ -485,7 +558,7 @@ class UrlParametersController {
         history.replaceState(null, "", url.href)
       else
         history.pushState(null, "", url.href)
-    } else if ("current_group" in values) {
+    } else if ("current_group" in changed) {
       // only group has changed
       if (group === null || test === null) {
         // Do not set URLs without a test or group
