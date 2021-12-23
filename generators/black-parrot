@@ -21,6 +21,7 @@ templ = """/*
 :top_module: {2}
 :tags: black-parrot
 :timeout: 1000
+:results_group: cores
 */
 """
 

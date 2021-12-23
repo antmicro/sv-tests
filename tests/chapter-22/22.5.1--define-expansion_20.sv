@@ -12,6 +12,7 @@
 :description: Test
 :tags: 22.5.1
 :type: preprocessing
+:results_group: dbg_not_all_tools
 */
 `define var_nand(dly) nand #dly
 module top ();

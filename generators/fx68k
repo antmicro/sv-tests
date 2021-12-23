@@ -18,6 +18,7 @@ templ = """/*
 :files: {0}
 :tags: fx68k
 :timeout: 100
+:results_group: cores
 */
 """
 

@@ -12,6 +12,7 @@
 :description: Test
 :tags: 22.5.1
 :type: preprocessing
+:results_group: dbg_not_all_tools
 */
 `define MACRO2(a=5, b, c="C") initial $display(a,,b,,c);
 module top ();

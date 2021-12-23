@@ -161,8 +161,11 @@ def tagDictSort(d: Dict[str, Any]):
 
 # Maps results_group ID to a name displayed in a report
 RESULTS_GROUP_DISPLAY_NAMES = {
-    "": "",
+    "": "Unit tests",
     "cores": "Cores",
+    "dbg_not_all_tools": "Some tools N/A",
+    "dbg_part_of_tag_0": "Few tests from a tag (0)",
+    "dbg_part_of_tag_1": "Few tests from a tag (1)",
 }
 
 

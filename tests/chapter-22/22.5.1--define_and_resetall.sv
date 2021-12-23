@@ -12,6 +12,7 @@
 :description: The text macro facility is not affected by the compiler directive `resetall
 :tags: 22.5.1
 :type: simulation elaboration preprocessing
+:results_group: dbg_not_all_tools
 */
 `define SOMESTRING "somestring"
 `resetall

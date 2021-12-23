@@ -12,6 +12,7 @@
 :description: $ungetc test
 :tags: 21.3
 :type: simulation elaboration parsing
+:results_group: dbg_part_of_tag_1
 */
 module top();
 

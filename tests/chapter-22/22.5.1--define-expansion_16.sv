@@ -12,6 +12,7 @@
 :description: Test
 :tags: 22.5.1
 :type: preprocessing
+:results_group: dbg_not_all_tools
 */
 `define MACRO3(a=5, b=0, c="C") initial $display(a,,b,,c);
 module top ();

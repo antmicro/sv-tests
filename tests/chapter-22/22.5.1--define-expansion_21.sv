@@ -13,6 +13,7 @@
 :should_fail_because: text specified for macro text shall not be split across string literals
 :tags: 22.5.1
 :type: preprocessing
+:results_group: dbg_not_all_tools
 */
 `define first_half "start of string
 module top ();

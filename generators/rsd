@@ -21,6 +21,7 @@ templ = """/*
 :tags: rsd
 :top_module: Core
 :timeout: 100
+:results_group: cores
 */
 """
 

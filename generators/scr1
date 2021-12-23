@@ -20,6 +20,7 @@ templ = """/*
 :tags: scr1
 :top_module: scr1_top_tb_axi
 :timeout: 100
+:results_group: cores
 */
 """
 

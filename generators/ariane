@@ -21,6 +21,7 @@ templ = """/*
 :tags: ariane
 :top_module: {2}
 :timeout: 360
+:results_group: cores
 */
 """
 
