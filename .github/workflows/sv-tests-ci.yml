@@ -167,8 +167,8 @@ jobs:
           make info
       - name: Checkout third party tests and cores
         run: |
-          git submodule update --init --recursive third_party/tests
-          git submodule update --init --recursive third_party/cores
+          git submodule update --init --recursive --depth 1 third_party/tests
+          git submodule update --init --recursive --depth 1 third_party/cores
       - name: Run
         run: |
           BIG_GENERATORS_EXPR=$(echo $BIG_GENERATORS | sed 's/ /\\|/g')
