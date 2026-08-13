@@ -24,6 +24,7 @@ templ = """/*
 :unsynthesizable: 1
 :simvariants: {2}
 :success_info: {success_info}
+:fail_message: {success_info}
 {extra_param}*/
 """
 
@@ -109,7 +110,9 @@ tests = {
             "UVM_TESTNAME=word_format_poll_test"
         ],
         "success_info":
-        "UVM TEST PASSED"
+        "UVM TEST PASSED",
+        "fail_message":
+        "UVM TEST FAILED"
     },
     "uvm_ac_config_db": {
         "uvm_tag":

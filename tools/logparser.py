@@ -12,7 +12,7 @@
 import re
 
 
-def parseLog(log, success_info):
+def parseLog(log, success_info, fail_message):
     res = True
     success_pattern_found = False
     for line in log.split('\n'):
@@ -20,6 +20,10 @@ def parseLog(log, success_info):
             pat = re.search(success_info, line.strip())
             if pat:
                 success_pattern_found = True
+        if fail_message != "":
+            pat = re.search(fail_message, line.strip())
+            if pat:
+                return False
         pat = re.search(r':([a-z]+):(.*)', line.strip())
         if pat:
             if pat.group(1) == 'assert':
