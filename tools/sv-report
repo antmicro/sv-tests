@@ -626,7 +626,8 @@ def collect_logs(runner_name: str):
         if tool_crashed or tool_should_fail != tool_failed:
             test_result.status = TestStatus.FAILED
         elif (test_log_data["mode"] == "simulation"
-              and not parseLog(log_content, test_log_data["success_info"], test_log_data["fail_message"])):
+              and not parseLog(log_content, test_log_data["success_info"],
+                               test_log_data["fail_message"])):
             test_result.status = TestStatus.FAILED
         else:
             test_result.status = TestStatus.PASSED

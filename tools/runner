@@ -276,7 +276,8 @@ try:
     test_passed = not tool_crashed and tool_should_fail == tool_failed
 
     if test_passed and test_params['mode'] == 'simulation':
-        test_passed = parseLog(output, test_params['success_info'], test_params['fail_message'])
+        test_passed = parseLog(
+            output, test_params['success_info'], test_params['fail_message'])
 
     if test_passed:
         logger.info("PASS: {}/{}".format(args.runner, args.test))
